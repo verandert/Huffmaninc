@@ -1,33 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "./huffman.h"
 
-typedef char** HuffmanChar;
-typedef struct
-{
-    float weight;
-    unsigned int parent, lchild, rchild;
-}HufmanNode, *HuffmanTree;
-
-void SelectMin(HuffmanTree T, int index, int *min1, int *min2);
-void CreateHuffmanTree(HuffmanTree *T, float *w, int n);
-void StrCopy(char *des, char * sour);
-void HuffmanEncode(HuffmanTree T, HuffmanChar *Hc, int n);
-
-int main(){
-    float w[] = {0.05, 0.29, 0.07, 0.08, 0.14, 0.23, 0.03, 0.11};
-    HuffmanTree T;
-    HuffmanChar HC;
-    CreateHuffmanTree(&T, w, 8);
-    HuffmanEncode(T, &HC, 8);
-    for(int i = 1; i <= 15; i++)
-    {
-        if(i<=8)printf("%d  %d  %.2f  %d  %d %s\n", i, (T+i)->parent, (T+i)->weight, (T+i)->lchild, (T+i)->rchild, HC[i]);
-        else printf("%d  %d  %.2f  %d  %d\n", i, (T+i)->parent, (T+i)->weight, (T+i)->lchild, (T+i)->rchild);
-    }
-    return 0;
-}
-
-void CreateHuffmanTree(HuffmanTree *T, float *w, int n) {
+void CreateHuffmanTree(HuffmanTree *T, float *w, char str[], int n) {
     int m, i;
     int min1, min2;
     HuffmanTree p;
@@ -37,6 +10,7 @@ void CreateHuffmanTree(HuffmanTree *T, float *w, int n) {
         m = 2*n;
         if((*T = (HuffmanTree)malloc(m*sizeof(HufmanNode)))){
             for(p = *T+1, i = 1; i <= n; p++, i++, w++){
+                p->HChar = str[i-1];
                 p->weight = *w;
                 p->parent = 0;
                 p->lchild = 0;
@@ -73,10 +47,11 @@ void SelectMin(HuffmanTree T, int index, int *min1, int *min2){
     }
 }
 
-void HuffmanEncode(HuffmanTree T, HuffmanChar *Hc, int n){
+void HuffmanEncode(HuffmanTree T, int n){
     int c, f, start;
     char *temp;
-    if((*Hc = (char**)malloc((n+1)*sizeof(char*)))){
+    HuffmanChar Hc;
+    if((Hc = (char**)malloc((n+1)*sizeof(char*)))){
         if((temp = (char*)malloc(n*sizeof(char)))){
             temp[n-1] = '\0';
             for (int i = 1; i <= n; i++)
@@ -86,13 +61,29 @@ void HuffmanEncode(HuffmanTree T, HuffmanChar *Hc, int n){
                     if(T[f].lchild == c) temp[--start] = '0';
                     else temp[--start] = '1';
                 }
-                if(((*Hc)[i] = (char*)malloc(sizeof(char)*(n - start)))){
-                    StrCopy((*Hc)[i], &temp[start]);
+                if((Hc[i] = (char*)malloc(sizeof(char)*(n - start)))){
+                    StrCopy(Hc[i], &temp[start]);
                 }
+                printf("%c : %s\n", T[i].HChar, Hc[i]);
             }
         }
     }
     free(temp);
+}
+//根据传递过来的二进制码str解码;
+void HuffmanDecode(HuffmanTree T, char str[], int n){
+    int index;
+    while (*str)
+    {
+        index = 2*n - 1;
+        while(T[index].lchild != 0 && *str){
+            if(*str == '0') index = T[index].lchild;
+            else index = T[index].rchild;
+            str++;
+        }
+        if(T[index].lchild == 0) printf("%c", T[index].HChar);
+    }
+    printf("\n");
 }
 
 void StrCopy(char *des, char * sour){
